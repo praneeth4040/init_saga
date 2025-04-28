@@ -70,17 +70,30 @@ exports.getUserPrescriptions = async (req, res) => {
 // Get a single prescription
 exports.getPrescription = async (req, res) => {
   try {
+    // Validate MongoDB ObjectId format
+    const objectIdPattern = /^[0-9a-fA-F]{24}$/;
+    if (!objectIdPattern.test(req.params.id)) {
+      return res.status(400).json({ 
+        message: 'Invalid prescription ID format',
+        error: 'The prescription ID must be a valid MongoDB ObjectId'
+      });
+    }
+
     const prescription = await Prescription.findOne({
       _id: req.params.id,
       user: req.user._id
     });
 
     if (!prescription) {
-      return res.status(404).json({ message: 'Prescription not found' });
+      return res.status(404).json({ 
+        message: 'Prescription not found',
+        error: 'No prescription found with the provided ID'
+      });
     }
 
     res.json(prescription);
   } catch (error) {
+    console.error('Error in getPrescription:', error);
     res.status(500).json({
       message: 'Error fetching prescription',
       error: error.message

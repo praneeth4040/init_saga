@@ -4,7 +4,7 @@ import { FaArrowLeft, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import './Dashboard.css';
+import './AddPrescription.css';
 
 const AddPrescription = () => {
   const navigate = useNavigate();
