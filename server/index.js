@@ -24,9 +24,11 @@ mongoose.connect(process.env.MONGODB_URI)
 // Routes
 const authRoutes = require('./routes/authRoutes');
 const prescriptionRoutes = require('./routes/prescriptionRoutes');
+const priceRoutes = require('./routes/priceRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
+app.use('/api/prices', priceRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
