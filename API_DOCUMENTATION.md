@@ -228,6 +228,85 @@ CLOUDINARY_API_SECRET=your_api_secret
   }
   ```
 
+## Price Comparison Endpoints
+
+### 1. Compare Medicine Prices
+- **Endpoint:** `GET /api/prices/compare/:medicineName`
+- **Headers:**
+  ```
+  Authorization: Bearer jwt_token_here
+  ```
+- **Query Parameters:**
+  ```
+  maxDistance: number (optional) - Maximum distance in meters to search for pharmacies (default: 10000)
+  ```
+- **Response:**
+  ```json
+  {
+    "medicineName": "Paracetamol",
+    "prices": [
+      {
+        "id": "price_id",
+        "medicineName": "Paracetamol",
+        "price": 10.99,
+        "unit": "per strip",
+        "lastUpdated": "2024-03-20T00:00:00.000Z",
+        "pharmacy": {
+          "id": "pharmacy_id",
+          "name": "City Pharmacy",
+          "address": "123 Main St",
+          "phone": "123-456-7890"
+        }
+      }
+    ],
+    "lowestPrice": {
+      "id": "price_id",
+      "medicineName": "Paracetamol",
+      "price": 10.99,
+      "unit": "per strip",
+      "lastUpdated": "2024-03-20T00:00:00.000Z",
+      "pharmacy": {
+        "id": "pharmacy_id",
+        "name": "City Pharmacy",
+        "address": "123 Main St",
+        "phone": "123-456-7890"
+      }
+    },
+    "totalPharmacies": 1
+  }
+  ```
+
+### 2. Update Medicine Price
+- **Endpoint:** `POST /api/prices/update`
+- **Headers:**
+  ```
+  Authorization: Bearer jwt_token_here
+  Content-Type: application/json
+  ```
+- **Request Body:**
+  ```json
+  {
+    "medicineName": "Paracetamol",
+    "price": 10.99,
+    "unit": "per strip",
+    "pharmacyId": "pharmacy_id_here"
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "message": "Price updated successfully",
+    "medicinePrice": {
+      "id": "price_id",
+      "medicineName": "Paracetamol",
+      "price": 10.99,
+      "unit": "per strip",
+      "lastUpdated": "2024-03-20T00:00:00.000Z",
+      "pharmacy": "pharmacy_id_here"
+    }
+  }
+  ```
+
 ## Error Responses
 
 ### 1. Authentication Error (401)
@@ -325,4 +404,23 @@ curl -X PUT http://localhost:3000/api/prescriptions/PRESCRIPTION_ID \
 ```bash
 curl -X DELETE http://localhost:3000/api/prescriptions/PRESCRIPTION_ID \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Compare Medicine Prices
+```bash
+curl http://localhost:3000/api/prices/compare/paracetamol?maxDistance=5000 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Update Medicine Price
+```bash
+curl -X POST http://localhost:3000/api/prices/update \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "medicineName": "Paracetamol",
+    "price": 10.99,
+    "unit": "per strip",
+    "pharmacyId": "pharmacy_id_here"
+  }'
 ``` 
