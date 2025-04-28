@@ -21,6 +21,10 @@ const Navbar = () => {
     navigate('/');
   };
 
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
   return (
     <nav className="navbar">
       <div className="navbar-container">
@@ -29,7 +33,7 @@ const Navbar = () => {
           <span className="logo-subtext">Your Prescription Companion</span>
         </Link>
 
-        <div className="menu-icon" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+        <div className="menu-icon" onClick={toggleMenu}>
           <span className={isMenuOpen ? 'bar open' : 'bar'}></span>
           <span className={isMenuOpen ? 'bar open' : 'bar'}></span>
           <span className={isMenuOpen ? 'bar open' : 'bar'}></span>
@@ -37,18 +41,30 @@ const Navbar = () => {
 
         <ul className={isMenuOpen ? 'nav-menu active' : 'nav-menu'}>
           <li className="nav-item">
-            <Link to="/" className="nav-link">Home</Link>
+            <Link to="/" className="nav-link" onClick={() => setIsMenuOpen(false)}>
+              Home
+            </Link>
           </li>
           
           {isAuthenticated ? (
             <>
               <li className="nav-item">
-                <Link to="/add-prescription" className="nav-link add-prescription-btn">
+                <Link 
+                  to="/add-prescription" 
+                  className="nav-link add-prescription-btn"
+                  onClick={() => setIsMenuOpen(false)}
+                >
                   Add Prescription
                 </Link>
               </li>
               <li className="nav-item">
-                <button onClick={handleLogout} className="nav-link logout-btn">
+                <button 
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }} 
+                  className="nav-link logout-btn"
+                >
                   Logout
                 </button>
               </li>
@@ -56,10 +72,22 @@ const Navbar = () => {
           ) : (
             <>
               <li className="nav-item">
-                <Link to="/login" className="nav-link">Login</Link>
+                <Link 
+                  to="/login" 
+                  className="nav-link"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login
+                </Link>
               </li>
               <li className="nav-item">
-                <Link to="/register" className="nav-link register-btn">Register</Link>
+                <Link 
+                  to="/register" 
+                  className="nav-link register-btn"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Register
+                </Link>
               </li>
             </>
           )}

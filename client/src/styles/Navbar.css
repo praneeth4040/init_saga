@@ -111,15 +111,20 @@ body {
 }
 
 .register-btn {
-  background-color: #4a90e2;
+  background-color: #4CAF50;
   color: white;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 5px;
   margin-left: 1rem;
+  font-size: 0.9rem;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .register-btn:hover {
-  background-color: #357abd;
+  background-color: #45a049;
   color: white;
 }
 
