@@ -1,13 +1,18 @@
-import React, { useState } from 'react';import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../utils/axios';
 import '../styles/Auth.css';
 
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -15,12 +20,55 @@ const Register = () => {
       ...prev,
       [name]: value
     }));
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
+  const validateForm = () => {
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle registration logic here
-    console.log('Registration data:', formData);
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await api.post('/auth/signup', {
+        username: formData.name,
+        email: formData.email,
+        password: formData.password
+      });
+      
+      // Store the token in localStorage
+      localStorage.setItem('token', response.data.token);
+      
+      // Store user data if needed
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      // Redirect to dashboard or home page
+      navigate('/dashboard');
+    } catch (err) {
+      setError(
+        err.response?.data?.message || 
+        'An error occurred during registration. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -28,6 +76,12 @@ const Register = () => {
       <div className="auth-box">
         <h2>Create Your MediTrack Account</h2>
         <p className="auth-subtitle">Join us to manage your prescriptions and medicines effectively</p>
+
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
@@ -40,6 +94,7 @@ const Register = () => {
               onChange={handleChange}
               placeholder="Enter your full name"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -53,6 +108,7 @@ const Register = () => {
               onChange={handleChange}
               placeholder="Enter your email"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -66,6 +122,8 @@ const Register = () => {
               onChange={handleChange}
               placeholder="Create a password"
               required
+              disabled={isLoading}
+              minLength={6}
             />
           </div>
 
@@ -79,19 +137,25 @@ const Register = () => {
               onChange={handleChange}
               placeholder="Confirm your password"
               required
+              disabled={isLoading}
+              minLength={6}
             />
           </div>
 
           <div className="terms-conditions">
-            <input type="checkbox" id="terms" required />
+            <input type="checkbox" id="terms" required disabled={isLoading} />
             <label htmlFor="terms">
               I agree to the <Link to="/terms">Terms of Service</Link> and{' '}
               <Link to="/privacy">Privacy Policy</Link>
             </label>
           </div>
 
-          <button type="submit" className="auth-button">
-            Create Account
+          <button 
+            type="submit" 
+            className="auth-button"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Creating Account...' : 'Create Account'}
           </button>
 
           <p className="auth-switch">

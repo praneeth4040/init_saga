@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../utils/axios';
 import '../styles/Auth.css';
 
 const Login = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -14,12 +18,34 @@ const Login = () => {
       ...prev,
       [name]: value
     }));
+    // Clear error when user starts typing
+    if (error) setError('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Login data:', formData);
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const response = await api.post('/auth/login', formData);
+      
+      // Store the token in localStorage
+      localStorage.setItem('token', response.data.token);
+      
+      // Store user data if needed
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      // Redirect to dashboard or home page
+      navigate('/dashboard');
+    } catch (err) {
+      setError(
+        err.response?.data?.message || 
+        'An error occurred during login. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -27,6 +53,12 @@ const Login = () => {
       <div className="auth-box">
         <h2>Welcome Back to MediTrack</h2>
         <p className="auth-subtitle">Sign in to manage your prescriptions and medicines</p>
+
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
@@ -39,6 +71,7 @@ const Login = () => {
               onChange={handleChange}
               placeholder="Enter your email"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -52,6 +85,7 @@ const Login = () => {
               onChange={handleChange}
               placeholder="Enter your password"
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -65,8 +99,12 @@ const Login = () => {
             </Link>
           </div>
 
-          <button type="submit" className="auth-button">
-            Sign In
+          <button 
+            type="submit" 
+            className="auth-button"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Signing In...' : 'Sign In'}
           </button>
 
           <div className="auth-divider">

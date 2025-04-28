@@ -1,7 +1,25 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/LandingPage.css';
 
 const LandingPage = () => {
+  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    setIsAuthenticated(!!token);
+  }, []);
+
+  const handleViewMedicines = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
+    }
+  };
+
   return (
     <div className="landing-page">
       {/* Hero Section */}
@@ -9,7 +27,9 @@ const LandingPage = () => {
         <div className="hero-content">
           <h1>Understand Your Prescription Medicines</h1>
           <p>Get detailed information about your medications, compare prices, and manage your treatment effectively</p>
-          <button className="cta-button">View Your Medicines</button>
+          <button className="cta-button" onClick={handleViewMedicines}>
+            {isAuthenticated ? 'View Dashboard' : 'View Your Medicines'}
+          </button>
         </div>
       </section>
 
@@ -70,7 +90,9 @@ const LandingPage = () => {
       {/* Call to Action Section */}
       <section className="cta-section">
         <h2>Ready to Understand Your Medicines Better?</h2>
-        <button className="cta-button">Start Now</button>
+        <button className="cta-button" onClick={handleViewMedicines}>
+          {isAuthenticated ? 'Go to Dashboard' : 'Start Now'}
+        </button>
       </section>
     </div>
   );
