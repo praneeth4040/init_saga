@@ -1,0 +1,199 @@
+.price-comparison-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.price-comparison-container h2 {
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.distance-filter {
+  margin: 1.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.distance-filter label {
+  font-weight: 600;
+  color: #34495e;
+}
+
+.distance-filter select {
+  padding: 0.5rem 1rem;
+  border: 2px solid #3498db;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: white;
+  cursor: pointer;
+}
+
+.lowest-price-banner {
+  background-color: #2ecc71;
+  color: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+  text-align: center;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.lowest-price-banner h3 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.lowest-price-banner p {
+  margin: 0.5rem 0;
+  font-size: 1.2rem;
+}
+
+.pharmacy-address {
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.prices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.price-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.price-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.price-card h3 {
+  color: #2c3e50;
+  margin: 0 0 1rem 0;
+}
+
+.price {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #e74c3c;
+  margin: 0.5rem 0;
+}
+
+.pharmacy-details {
+  margin: 1rem 0;
+  color: #34495e;
+}
+
+.pharmacy-details p {
+  margin: 0.3rem 0;
+}
+
+.last-updated {
+  font-size: 0.9rem;
+  color: #7f8c8d;
+  margin-top: 1rem;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 1rem;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.retry-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.retry-button:hover {
+  background-color: #c82333;
+}
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 2rem;
+}
+
+.no-results p {
+  color: #6c757d;
+  margin: 0.5rem 0;
+}
+
+/* Search bar styles */
+.search-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.search-input {
+  width: 100%;
+  max-width: 600px;
+  padding: 0.8rem 1.2rem;
+  font-size: 1rem;
+  border: 2px solid #3498db;
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: #2980b9;
+}
+
+@media (max-width: 768px) {
+  .price-comparison-container {
+    padding: 1rem;
+  }
+  
+  .prices-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .distance-filter {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+} 

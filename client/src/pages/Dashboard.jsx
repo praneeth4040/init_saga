@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaBell, FaTrash, FaPills, FaCalendarAlt, FaClock, FaInfoCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { FaPlus, FaBell, FaTrash, FaPills, FaCalendarAlt, FaClock, FaInfoCircle, FaExclamationTriangle, FaRobot } from 'react-icons/fa';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -245,6 +245,12 @@ const Dashboard = () => {
             onClick={() => navigate('/add-prescription')}
           >
             <FaPlus /> Add New Prescription
+          </button>
+          <button 
+            className="chatbot-button"
+            onClick={() => navigate('/chatbot')}
+          >
+            <FaRobot /> Chat with MediBot
           </button>
           <button 
             style={{

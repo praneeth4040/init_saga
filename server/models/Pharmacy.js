@@ -26,14 +26,26 @@ const pharmacySchema = new mongoose.Schema({
       type: [Number],
       required: true
     }
+  },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
-}, {
-  timestamps: true
 });
 
-// Index for geospatial queries
+// Create a geospatial index for location
 pharmacySchema.index({ location: '2dsphere' });
 
-const Pharmacy = mongoose.model('Pharmacy', pharmacySchema);
-
-module.exports = Pharmacy; 
+module.exports = mongoose.model('Pharmacy', pharmacySchema); 

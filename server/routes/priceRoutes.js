@@ -3,6 +3,7 @@ const router = express.Router();
 const MedicinePrice = require('../models/MedicinePrice');
 const Pharmacy = require('../models/Pharmacy');
 const auth = require('../middleware/auth');
+const priceController = require('../controllers/priceController');
 
 // Get price comparison for a medicine
 router.get('/compare/:medicineName', auth, async (req, res) => {
@@ -85,5 +86,8 @@ router.post('/update', auth, async (req, res) => {
     });
   }
 });
+
+// Compare prices for a specific medicine
+router.get('/compare/:medicineName', priceController.comparePrices);
 
 module.exports = router; 

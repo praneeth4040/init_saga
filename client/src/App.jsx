@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import AddPrescription from './pages/AddPrescription';
 import PrescriptionDetail from './pages/PrescriptionDetail';
 import TestReminder from './pages/TestReminder';
+import Chatbot from './pages/Chatbot';
 import reminderService from './services/reminderService';
 import './App.css';
 
@@ -34,6 +35,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/chatbot" element={<Chatbot />} />
           <Route path='/add-prescription' element={<AddPrescription/>}/>
           <Route path='/prescription/:id' element={<PrescriptionDetail/>}/>
           <Route path='/test-reminder' element={<TestReminder/>}/>

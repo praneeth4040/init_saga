@@ -7,23 +7,40 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
     trim: true,
-    lowercase: true
+    lowercase: true,
+    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email address']
   },
   username: {
     type: String,
     required: true,
-    unique: true,
     trim: true,
-    minlength: 3
+    minlength: 3,
+    maxlength: 30
   },
   password: {
     type: String,
     required: true,
     minlength: 6
+  },
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      default: 'Point'
+    },
+    coordinates: {
+      type: [Number],
+      default: [77.5946, 12.9716] // Default to Bangalore coordinates
+    }
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
-}, {
-  timestamps: true
 });
+
+// Create index for geospatial queries
+userSchema.index({ location: '2dsphere' });
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
