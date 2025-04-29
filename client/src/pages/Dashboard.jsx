@@ -5,6 +5,7 @@ import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './Dashboard.css';
+import reminderService from '../services/reminderService';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -16,6 +17,28 @@ const Dashboard = () => {
   useEffect(() => {
     fetchPrescriptions();
   }, []);
+  
+  // Set up reminders for all active prescriptions
+  useEffect(() => {
+    // Initialize audio context (will be suspended until user interaction)
+    reminderService.initAudioContext();
+    
+    // Set up reminders for all enabled prescriptions
+    prescriptions.forEach(prescription => {
+      if (prescription.reminderEnabled) {
+        reminderService.setupReminder(prescription);
+      }
+    });
+    
+    // Clean up all reminders when component unmounts
+    return () => {
+      prescriptions.forEach(prescription => {
+        if (prescription._id) {
+          reminderService.clearReminder(prescription._id);
+        }
+      });
+    };
+  }, [prescriptions]);
 
   const fetchPrescriptions = async () => {
     try {
@@ -55,7 +78,7 @@ const Dashboard = () => {
           }
         });
 
-        setPrescriptions(prev => prev.filter(p => p.id !== id));
+        setPrescriptions(prev => prev.filter(p => p._id !== id));
         toast.success('Prescription deleted successfully');
       } catch (err) {
         console.error('Error deleting prescription:', err);
@@ -67,14 +90,21 @@ const Dashboard = () => {
   const toggleReminder = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      const prescription = prescriptions.find(p => p.id === id);
+      const prescription = prescriptions.find(p => p._id === id);
+      
+      if (!prescription) {
+        toast.error('Prescription not found');
+        return;
+      }
+      
+      const updatedPrescription = {
+        ...prescription,
+        reminderEnabled: !prescription.reminderEnabled
+      };
       
       await axios.put(
         `http://localhost:3000/api/prescriptions/${id}`,
-        {
-          ...prescription,
-          reminderEnabled: !prescription.reminderEnabled
-        },
+        updatedPrescription,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -82,18 +112,31 @@ const Dashboard = () => {
         }
       );
 
+      // Update local state
       setPrescriptions(prev => prev.map(p => {
-        if (p.id === id) {
-          return { ...p, reminderEnabled: !p.reminderEnabled };
+        if (p._id === id) {
+          return updatedPrescription;
         }
         return p;
       }));
 
-      toast.success(
-        prescription.reminderEnabled 
-          ? 'Reminder disabled' 
-          : 'Reminder enabled'
-      );
+      // Initialize audio context on user interaction
+      reminderService.initAudioContext();
+      
+      // Handle reminder setup or clearing
+      if (updatedPrescription.reminderEnabled) {
+        // Request notification permission
+        await reminderService.requestNotificationPermission();
+        
+        // Set up the reminder
+        reminderService.setupReminder(updatedPrescription);
+        
+        toast.success('Reminder enabled - You will be notified at the scheduled times');
+      } else {
+        // Clear the reminder
+        reminderService.clearReminder(id);
+        toast.success('Reminder disabled');
+      }
     } catch (err) {
       console.error('Error toggling reminder:', err);
       toast.error('Failed to update reminder. Please try again.');
@@ -196,12 +239,31 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
-        <button 
-          className="add-button"
-          onClick={() => navigate('/add-prescription')}
-        >
-          <FaPlus /> Add New Prescription
-        </button>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button 
+            className="add-button"
+            onClick={() => navigate('/add-prescription')}
+          >
+            <FaPlus /> Add New Prescription
+          </button>
+          <button 
+            style={{
+              backgroundColor: '#17a2b8',
+              color: 'white',
+              border: 'none',
+              padding: '0.75rem 1.5rem',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              fontSize: '1rem'
+            }}
+            onClick={() => navigate('/test-reminder')}
+          >
+            <FaBell /> Test Reminders
+          </button>
+        </div>
       </div>
 
       <div className="prescriptions-grid">

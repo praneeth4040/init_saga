@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaBell, FaTrash, FaPills, FaCalendarAlt, FaClock, FaInfoCircle, FaExclamationTriangle } from 'react-icons/fa';
+import { FaArrowLeft, FaBell, FaTrash, FaPills, FaCalendarAlt, FaClock, FaInfoCircle, FaExclamationTriangle, FaCog } from 'react-icons/fa';
 import axios from 'axios';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import './PrescriptionDetail.css';
+import reminderService from '../services/reminderService';
+import VoiceReminderSettings from '../components/VoiceReminderSettings';
+import ReminderScheduleEditor from '../components/ReminderScheduleEditor';
 
 const PrescriptionDetail = () => {
   const { id } = useParams();
@@ -12,6 +15,9 @@ const PrescriptionDetail = () => {
   const [prescription, setPrescription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showVoiceSettings, setShowVoiceSettings] = useState(false);
+  const [showScheduleEditor, setShowScheduleEditor] = useState(false);
+  const [activeReminders, setActiveReminders] = useState([]);
 
   useEffect(() => {
     if (!id) {
@@ -30,6 +36,125 @@ const PrescriptionDetail = () => {
 
     fetchPrescriptionDetails();
   }, [id]);
+  
+  // Set up reminders when prescription data is loaded
+  useEffect(() => {
+    if (prescription && prescription.reminderEnabled) {
+      // Initialize audio context (will be suspended until user interaction)
+      reminderService.initAudioContext();
+      
+      // Set up the reminder
+      reminderService.setupReminder(prescription);
+      
+      // Get active reminders
+      const reminders = reminderService.getActiveReminders(prescription._id);
+      setActiveReminders(reminders);
+    } else {
+      setActiveReminders([]);
+    }
+    
+    // Clean up reminders when component unmounts
+    return () => {
+      if (prescription && prescription._id) {
+        reminderService.clearReminder(prescription._id);
+      }
+    };
+  }, [prescription]);
+  
+  // Handle saving voice settings
+  const handleSaveVoiceSettings = async (settings) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Update the prescription with voice settings
+      const updatedPrescription = {
+        ...prescription,
+        voiceOptions: settings.voiceOptions,
+        reminderMessage: settings.reminderMessage
+      };
+      
+      await axios.put(
+        `http://localhost:3000/api/prescriptions/${id}`,
+        updatedPrescription,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      
+      // Update local state
+      setPrescription(updatedPrescription);
+      
+      // Close the settings panel
+      setShowVoiceSettings(false);
+      
+      // If reminders are enabled, update them with new settings
+      if (updatedPrescription.reminderEnabled) {
+        // Clear existing reminders
+        reminderService.clearReminder(id);
+        
+        // Set up new reminders with updated settings
+        reminderService.setupReminder(updatedPrescription);
+        
+        // Update active reminders list
+        const reminders = reminderService.getActiveReminders(id);
+        setActiveReminders(reminders);
+      }
+      
+      toast.success('Voice reminder settings saved');
+    } catch (err) {
+      console.error('Error saving voice settings:', err);
+      toast.error('Failed to save voice settings. Please try again.');
+    }
+  };
+  
+  // Handle saving schedule changes
+  const handleSaveSchedule = async (newSchedule) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Update the prescription with new schedule
+      const updatedPrescription = {
+        ...prescription,
+        medicationSchedule: newSchedule
+      };
+      
+      await axios.put(
+        `http://localhost:3000/api/prescriptions/${id}`,
+        updatedPrescription,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+      
+      // Update local state
+      setPrescription(updatedPrescription);
+      
+      // Close the schedule editor
+      setShowScheduleEditor(false);
+      
+      // If reminders are enabled, update them with new schedule
+      if (updatedPrescription.reminderEnabled) {
+        // Clear existing reminders
+        reminderService.clearReminder(id);
+        
+        // Set up new reminders with updated schedule
+        reminderService.setupReminder(updatedPrescription);
+        
+        // Update active reminders list
+        const reminders = reminderService.getActiveReminders(id);
+        setActiveReminders(reminders);
+      }
+      
+      toast.success('Medication schedule updated');
+    } catch (err) {
+      console.error('Error updating schedule:', err);
+      toast.error('Failed to update schedule. Please try again.');
+    }
+  };
 
   const fetchPrescriptionDetails = async () => {
     try {
@@ -92,12 +217,16 @@ const PrescriptionDetail = () => {
   const toggleReminder = async () => {
     try {
       const token = localStorage.getItem('token');
+      
+      // Update the prescription with new reminder state
+      const updatedPrescription = {
+        ...prescription,
+        reminderEnabled: !prescription.reminderEnabled
+      };
+      
       await axios.put(
         `http://localhost:3000/api/prescriptions/${id}`,
-        {
-          ...prescription,
-          reminderEnabled: !prescription.reminderEnabled
-        },
+        updatedPrescription,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -105,16 +234,45 @@ const PrescriptionDetail = () => {
         }
       );
 
-      setPrescription(prev => ({
-        ...prev,
-        reminderEnabled: !prev.reminderEnabled
-      }));
+      // Update local state
+      setPrescription(updatedPrescription);
 
-      toast.success(
-        prescription.reminderEnabled 
-          ? 'Reminder disabled' 
-          : 'Reminder enabled'
-      );
+      // Initialize audio context on user interaction
+      reminderService.initAudioContext();
+      
+      // Handle reminder setup or clearing
+      if (updatedPrescription.reminderEnabled) {
+        // Request notification permission
+        await reminderService.requestNotificationPermission();
+        
+        // Set up the reminder
+        const remindersSet = reminderService.setupReminder(updatedPrescription);
+        
+        // Update active reminders list
+        const reminders = reminderService.getActiveReminders(id);
+        setActiveReminders(reminders);
+        
+        if (remindersSet > 0) {
+          toast.success(`Reminder enabled - You will be notified at ${remindersSet} scheduled times`);
+          
+          // Show voice settings if this is the first time enabling reminders
+          if (!prescription.voiceOptions) {
+            setTimeout(() => {
+              setShowVoiceSettings(true);
+            }, 1000);
+          }
+        } else {
+          toast.warning('Reminder enabled, but no valid schedule times found. Please update the schedule.');
+          setTimeout(() => {
+            setShowScheduleEditor(true);
+          }, 1000);
+        }
+      } else {
+        // Clear the reminder
+        const remindersCleared = reminderService.clearReminder(updatedPrescription._id);
+        setActiveReminders([]);
+        toast.success(`Reminders disabled (${remindersCleared} reminders cleared)`);
+      }
     } catch (err) {
       console.error('Error toggling reminder:', err);
       toast.error('Failed to update reminder. Please try again.');
@@ -205,6 +363,14 @@ const PrescriptionDetail = () => {
           >
             <FaBell /> {prescription.reminderEnabled ? 'Reminder On' : 'Set Reminder'}
           </button>
+          {prescription.reminderEnabled && (
+            <button
+              className="settings-button"
+              onClick={() => setShowVoiceSettings(true)}
+            >
+              <FaCog /> Voice Settings
+            </button>
+          )}
           <button
             className="delete-button"
             onClick={deletePrescription}
@@ -275,9 +441,40 @@ const PrescriptionDetail = () => {
                 <FaCalendarAlt className="detail-icon" />
                 <div>
                   <strong>Schedule</strong>
-                  <p>{prescription.medicationSchedule}</p>
+                  <div className="schedule-container">
+                    <p>{prescription.medicationSchedule}</p>
+                    {prescription.reminderEnabled && (
+                      <button 
+                        className="edit-schedule-button"
+                        onClick={() => setShowScheduleEditor(true)}
+                      >
+                        Edit Schedule
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
+              
+              {prescription.reminderEnabled && activeReminders.length > 0 && (
+                <div className="detail-item reminder-status">
+                  <FaBell className="detail-icon" />
+                  <div>
+                    <strong>Active Reminders</strong>
+                    <div className="active-reminders">
+                      {activeReminders.map((reminder, index) => (
+                        <div key={index} className="reminder-item">
+                          <span className="reminder-time">
+                            {reminder.schedule.hour}:{reminder.schedule.minute.toString().padStart(2, '0')}
+                          </span>
+                          <span className="reminder-next">
+                            Next: {reminder.nextTriggerTime}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -305,6 +502,152 @@ const PrescriptionDetail = () => {
           )}
         </div>
       </div>
+      
+      {/* Voice Settings Modal */}
+      {showVoiceSettings && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <VoiceReminderSettings 
+              prescription={prescription}
+              onSave={handleSaveVoiceSettings}
+              onCancel={() => setShowVoiceSettings(false)}
+            />
+          </div>
+        </div>
+      )}
+      
+      {/* Schedule Editor Modal */}
+      {showScheduleEditor && (
+        <div className="modal-overlay">
+          <div className="modal-container">
+            <div className="schedule-editor-modal">
+              <h3>Edit Medication Schedule</h3>
+              <ReminderScheduleEditor 
+                initialSchedule={prescription.medicationSchedule}
+                onChange={handleSaveSchedule}
+              />
+              <button 
+                className="close-button"
+                onClick={() => setShowScheduleEditor(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <style jsx>{`
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background-color: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        }
+        
+        .modal-container {
+          max-width: 90%;
+          max-height: 90%;
+          overflow-y: auto;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .schedule-editor-modal {
+          background-color: white;
+          padding: 1.5rem;
+          border-radius: 8px;
+          width: 500px;
+          max-width: 100%;
+        }
+        
+        .schedule-editor-modal h3 {
+          margin-top: 0;
+          margin-bottom: 1.5rem;
+          color: #333;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 0.5rem;
+        }
+        
+        .close-button {
+          display: block;
+          width: 100%;
+          padding: 0.75rem;
+          background-color: #6c757d;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          margin-top: 1rem;
+        }
+        
+        .schedule-container {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        
+        .edit-schedule-button {
+          background-color: #6c757d;
+          color: white;
+          border: none;
+          padding: 0.25rem 0.5rem;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 0.8rem;
+          margin-left: 1rem;
+        }
+        
+        .settings-button {
+          background-color: #17a2b8;
+          color: white;
+          border: none;
+          padding: 0.75rem 1.5rem;
+          border-radius: 8px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 1rem;
+        }
+        
+        .active-reminders {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          margin-top: 0.5rem;
+        }
+        
+        .reminder-item {
+          display: flex;
+          justify-content: space-between;
+          background-color: #f8f9fa;
+          padding: 0.5rem;
+          border-radius: 4px;
+          border-left: 3px solid #28a745;
+        }
+        
+        .reminder-time {
+          font-weight: 500;
+        }
+        
+        .reminder-next {
+          color: #6c757d;
+          font-size: 0.9rem;
+        }
+        
+        .reminder-status {
+          margin-top: 1rem;
+          padding-top: 1rem;
+          border-top: 1px dashed #dee2e6;
+        }
+      `}</style>
     </div>
   );
 };
